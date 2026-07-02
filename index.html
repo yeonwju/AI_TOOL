@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AI Tool 비용 지출 기안서</title>
+<style>
+  :root{
+    --header-bg:#595959;
+    --header-text:#ffffff;
+    --label-bg:#ececec;
+    --line:#000000;
+    --line-soft:#999999;
+    --value-bg:#ffffff;
+    --input-bg:#f7f7f7;
+    --input-border:#b7b7b7;
+    --ink:#222222;
+    --sub:#666666;
+    --page-bg:#e9e9e9;
+    --mono: 'Consolas','SFMono-Regular','Roboto Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--page-bg);
+    font-family:"Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    color:var(--ink);
+    padding:32px 16px;
+  }
+  .sheet{
+    max-width:960px;
+    margin:0 auto;
+    background:var(--value-bg);
+    border:1px solid var(--line);
+  }
+
+  /* Title */
+  .doc-title{
+    text-align:center;
+    padding:20px 20px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  .doc-title h1{
+    margin:0;
+    font-size:22px;
+    letter-spacing:-0.01em;
+  }
+  .doc-title .doc-sub{
+    margin-top:6px;
+    font-size:12.5px;
+    color:var(--sub);
+  }
+
+  /* Top meta row: applicant box (left) + approval route box (right) */
+  .top-meta{
+    display:flex;
+    gap:0;
+    border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .applicant-box{
+    flex:0 0 260px;
+    border-right:1px solid var(--line);
+  }
+  .applicant-box .row{
+    display:flex;
+    border-top:1px solid var(--line-soft);
+  }
+  .applicant-box .row:first-child{border-top:none;}
+  .applicant-box .label{
+    width:92px;
+    flex:0 0 92px;
+    background:var(--label-bg);
+    font-weight:700;
+    font-size:12.5px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:8px 6px;
+    border-right:1px solid var(--line-soft);
+  }
+  .applicant-box .value{
+    flex:1;
+    padding:6px 10px;
+    display:flex;
+    align-items:center;
+  }
+  .applicant-box input{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-size:13px;
+    font-family:inherit;
+    color:var(--ink);
+    outline:none;
+    padding:2px 0;
+  }
+
+  .route-wrap{
+    flex:1;
+    min-width:420px;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+  }
+  table.route-table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+  table.route-table th, table.route-table td{
+    border:1px solid var(--line-soft);
+    text-align:center;
+    padding:6px 4px;
+    font-size:12px;
+  }
+  table.route-table th{
+    background:var(--label-bg);
+    font-weight:700;
+    color:var(--ink);
+  }
+  table.route-table th.grouplabel{
+    width:30px;
+    writing-mode:vertical-rl;
+    text-orientation:upright;
+    letter-spacing:2px;
+    background:var(--header-bg);
+    color:#fff;
+    border-color:var(--header-bg);
+  }
+  table.route-table td input{
+    width:100%;
+    border:none;
+    background:transparent;
+    text-align:center;
+    font-size:12px;
+    font-family:inherit;
+    padding:3px 2px;
+    outline:none;
+  }
+  table.route-table td input.name{
+    font-weight:700;
+  }
+
+  /* Block = header bar + rows */
+  .block{
+    border-bottom:1px solid var(--line);
+  }
+  .block-header{
+    background:var(--header-bg);
+    color:var(--header-text);
+    text-align:center;
+    font-weight:700;
+    font-size:14.5px;
+    padding:9px 10px;
+    border-bottom:1px solid var(--line);
+  }
+  .row{
+    display:flex;
+    border-top:1px solid var(--line-soft);
+  }
+  .row:first-of-type{border-top:none;}
+  .row .label{
+    width:170px;
+    flex:0 0 170px;
+    background:var(--label-bg);
+    font-weight:700;
+    font-size:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:10px 8px;
+    border-right:1px solid var(--line-soft);
+  }
+  .row .value{
+    flex:1;
+    background:var(--value-bg);
+    padding:9px 12px;
+    display:flex;
+    align-items:center;
+  }
+  .row .value.wrap{
+    align-items:flex-start;
+  }
+
+  input[type=text], input[type=date], input[type=number], select, textarea{
+    width:100%;
+    background:var(--input-bg);
+    border:1px solid var(--input-border);
+    border-radius:2px;
+    padding:7px 9px;
+    font-size:13px;
+    font-family:inherit;
+    color:var(--ink);
+    outline:none;
+  }
+  textarea{resize:vertical; min-height:34px;}
+  input:disabled{color:#999; background:#eee;}
+
+  /* Choice pills - monochrome, flat */
+  .choice-row{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .choice{position:relative;}
+  .choice input{position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer; margin:0;}
+  .choice label{
+    display:block;
+    padding:8px 16px;
+    border:1px solid var(--line-soft);
+    border-radius:2px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--sub);
+    cursor:pointer;
+    background:#f7f7f7;
+    text-align:center;
+    min-width:96px;
+  }
+  .choice input:checked + label{
+    background:var(--header-bg);
+    color:#fff;
+    border-color:var(--header-bg);
+  }
+
+  .sub-panel{
+    display:none;
+    padding:14px 12px 4px;
+  }
+  .sub-panel.active{display:block;}
+
+  .field-row{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+    flex:1;
+    min-width:150px;
+  }
+  .field label{
+    font-size:11px;
+    color:var(--sub);
+    font-weight:700;
+  }
+
+  .calc-box{
+    margin-top:6px;
+    background:#f2f2f2;
+    border:1px solid var(--line-soft);
+    border-radius:2px;
+    padding:12px 14px;
+    font-family:var(--mono);
+    font-size:12.5px;
+    line-height:1.9;
+    color:#333;
+  }
+  .calc-box .formula{ color:#555; }
+  .calc-box .result{ color:#000; font-weight:700; font-size:14px; }
+  .calc-box hr{ border:none; border-top:1px dashed #bbb; margin:8px 0; }
+
+  .note{
+    font-size:11.5px;
+    color:var(--sub);
+    margin-top:8px;
+    line-height:1.6;
+  }
+  .fx-note{
+    margin-top:8px;
+    font-size:11.5px;
+    color:#7a3d1a;
+  }
+
+  /* Summary */
+  .summary-row{
+    display:flex;
+    justify-content:space-between;
+    padding:10px 16px;
+    border-top:1px solid var(--line-soft);
+    font-size:13.5px;
+  }
+  .summary-row:first-of-type{border-top:none;}
+  .summary-row .lbl{color:var(--sub); font-weight:600;}
+  .summary-row .val{font-family:var(--mono); font-weight:700;}
+  .summary-final{
+    background:var(--header-bg);
+    color:#fff;
+  }
+  .summary-final .lbl{color:#e2e2e2;}
+  .summary-final .val{color:#fff; font-size:16px;}
+
+  .print-bar{
+    max-width:960px;
+    margin:14px auto 0;
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+  }
+  .btn{
+    border:1px solid var(--header-bg);
+    background:#fff;
+    color:var(--header-bg);
+    padding:9px 18px;
+    border-radius:2px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .btn.primary{background:var(--header-bg); color:#fff;}
+
+  @media print{
+    body{background:#fff; padding:0;}
+    .print-bar{display:none;}
+    .sheet{border:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+  <div class="doc-title">
+    <h1>AI Tool 비용 지출 기안서</h1>
+    <div class="doc-sub">AI Tool 구독/이용료 결제에 대한 승인을 요청합니다.</div>
+  </div>
+
+  <!-- 상단: 신청 정보(좌) + 결재선(우) -->
+  <div class="top-meta">
+    <div class="applicant-box">
+      <div class="row"><div class="label">신청자</div><div class="value"><input type="text" placeholder="이름"></div></div>
+      <div class="row"><div class="label">신청 부서</div><div class="value"><input type="text" placeholder="예: AX기획팀"></div></div>
+      <div class="row"><div class="label">신청일자</div><div class="value"><input type="date" id="draftDate"></div></div>
+      <div class="row"><div class="label">고유 ID</div><div class="value"><input type="text" id="uniqueId" readonly style="font-family:'Consolas','SFMono-Regular','Roboto Mono',monospace; color:#444;"></div></div>
+    </div>
+    <div class="route-wrap">
+      <table class="route-table">
+        <tr>
+          <th class="grouplabel" rowspan="2">신청</th>
+          <th>팀원</th>
+          <th class="grouplabel" rowspan="2">승인</th>
+          <th>팀장</th>
+          <th>기술부장</th>
+          <th>본부장</th>
+          <th class="grouplabel" rowspan="2">수신</th>
+          <th>팀원</th>
+          <th>팀장</th>
+        </tr>
+        <tr>
+          <td><input type="text" class="name" placeholder="이름"><input type="text" placeholder="직급"></td>
+          <td><input type="text" class="name" placeholder="이름"><input type="text" placeholder="직급"></td>
+          <td><input type="text" class="name" placeholder="이름"><input type="text" placeholder="직급"></td>
+          <td><input type="text" class="name" placeholder="이름"><input type="text" placeholder="직급"></td>
+          <td><input type="text" class="name" placeholder="이름"><input type="text" placeholder="직급"></td>
+          <td><input type="text" class="name" placeholder="이름"><input type="text" placeholder="직급"></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- AI Tool 상세 -->
+  <div class="block">
+    <div class="block-header">AI Tool 상세</div>
+    <div class="row"><div class="label">AI Tool명</div><div class="value"><input type="text" placeholder="예: OpenAI ChatGPT Team"></div></div>
+    <div class="row"><div class="label">사용 목적</div><div class="value wrap"><textarea rows="2" placeholder="업무 활용 목적을 간단히 기재"></textarea></div></div>
+  </div>
+
+  <!-- 결제 구분 -->
+  <div class="block">
+    <div class="block-header">결제 구분</div>
+    <div class="row">
+      <div class="label">결제 유형</div>
+      <div class="value">
+        <div class="choice-row" id="payTypeGroup">
+          <div class="choice">
+            <input type="radio" name="payType" id="pt-prepaid" value="prepaid" checked>
+            <label for="pt-prepaid">선불결제</label>
+          </div>
+          <div class="choice">
+            <input type="radio" name="payType" id="pt-prorated" value="prorated">
+            <label for="pt-prorated">일할결제</label>
+          </div>
+          <div class="choice">
+            <input type="radio" name="payType" id="pt-postpaid" value="postpaid">
+            <label for="pt-postpaid">후불결제</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 선불 -->
+    <div class="sub-panel active" id="panel-prepaid">
+      <div class="field-row">
+        <div class="field" style="flex:2; min-width:260px;">
+          <label>선불결제 유형</label>
+          <div class="choice-row">
+            <div class="choice">
+              <input type="radio" name="prepaidType" id="pp-new" value="new" checked>
+              <label for="pp-new">신규 구매</label>
+            </div>
+            <div class="choice">
+              <input type="radio" name="prepaidType" id="pp-renew" value="renew">
+              <label for="pp-renew">기존 계정 갱신</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field-row" id="pp-new-extra">
+        <div class="field" style="flex:2; min-width:280px;">
+          <label>신규 구매 결제 차수</label>
+          <div class="choice-row">
+            <div class="choice">
+              <input type="radio" name="newPurchaseStage" id="np-initial" value="initial" checked>
+              <label for="np-initial">선결제 (최초 좌석)</label>
+            </div>
+            <div class="choice">
+              <input type="radio" name="newPurchaseStage" id="np-remain" value="remain">
+              <label for="np-remain">잔여 결제 (추가 좌석)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="note" id="pp-new-note">신규 계정 결제로 선결제가 필요한 경우, 이번 결제가 최초 선결제인지 이후 잔여 좌석에 대한 결제인지 구분해 주세요. 선결제와 잔여결제는 동일 ID로 관리됩니다.</div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>계약 기간</label>
+          <select id="pp-term">
+            <option value="1">월간(1개월)</option>
+            <option value="12">연간(12개월)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>결제 통화</label>
+          <select id="pp-currency">
+            <option value="USD">USD</option>
+            <option value="KRW">KRW</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>결제 금액 (선택 통화 기준)</label>
+          <input type="number" id="pp-amount" placeholder="예: 300" step="0.01">
+        </div>
+        <div class="field">
+          <label>구매 좌석 수</label>
+          <input type="number" id="pp-seats" placeholder="예: 5" min="1" step="1">
+        </div>
+      </div>
+      <div class="note">신규 구매의 경우 라이선스/좌석 수 및 최초 계약 조건을 비고란에 기재해 주세요. 갱신의 경우 기존 계약 종료일과 동일 조건 여부를 확인해 주세요.</div>
+    </div>
+
+    <!-- 일할결제 -->
+    <div class="sub-panel" id="panel-prorated">
+      <div class="field-row">
+        <div class="field">
+          <label>결제(구매) 시점</label>
+          <input type="date" id="pr-startDate">
+        </div>
+        <div class="field">
+          <label>정기 결제일</label>
+          <select id="pr-billingDay">
+            <option value="7">매월 7일</option>
+            <option value="19">매월 19일</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>월 구독료 (USD)</label>
+          <input type="number" id="pr-monthlyFee" placeholder="예: 30" step="0.01">
+        </div>
+        <div class="field">
+          <label>구매 좌석 수</label>
+          <input type="number" id="pr-seats" placeholder="예: 5" min="1" step="1">
+        </div>
+      </div>
+      <div class="calc-box" id="pr-calcBox">
+        <div>결제 시점을 입력하면 자동으로 계산됩니다.</div>
+      </div>
+      <div class="note">일할 계산은 결제 시점(당일 포함)부터 다음 정기 결제일 전날까지의 일수를 기준으로 합니다. 정기 결제일 당일부터는 정상 정기결제로 청구됩니다.</div>
+    </div>
+
+    <!-- 후불 -->
+    <div class="sub-panel" id="panel-postpaid">
+      <div class="field-row">
+        <div class="field" style="flex:2;">
+          <label>정산 대상 기간</label>
+          <input type="text" placeholder="예: 2026-06-01 ~ 2026-06-30">
+        </div>
+        <div class="field">
+          <label>예상 청구 금액 (USD)</label>
+          <input type="number" id="pf-amount" placeholder="예: 120" step="0.01">
+        </div>
+        <div class="field">
+          <label>구매 좌석 수</label>
+          <input type="number" id="pf-seats" placeholder="예: 5" min="1" step="1">
+        </div>
+      </div>
+      <div class="note">후불결제 건은 결제가 이루어진 후 사후정산으로 처리됩니다. 실결제 금액을 기준으로 작성해주세요.</div>
+    </div>
+  </div>
+
+  <!-- 환율 리스크 -->
+  <div class="block">
+    <div class="block-header">환율 변동 리스크 반영</div>
+    <div class="row">
+      <div class="label">현재 환율<br>(KRW/USD)</div>
+      <div class="value">
+        <div class="field-row" style="margin-bottom:0; width:100%;">
+          <div class="field">
+            <input type="number" id="fxRate" placeholder="예: 1380" step="0.01">
+          </div>
+          <div class="field" style="flex:0 0 120px; min-width:100px;">
+            <input type="text" value="리스크 버퍼 +2%" disabled>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sub-panel active" style="padding-top:10px;">
+      <div class="calc-box" id="fxCalcBox">
+        <div>현재 환율을 입력하면 자동으로 계산됩니다.</div>
+      </div>
+      <div class="fx-note">※ 실결제 이후 이보다 낮은 환율이 적용되면 차액은 잔여 예산으로 귀속됩니다.</div>
+    </div>
+  </div>
+
+  <!-- 최종 요약 -->
+  <div class="block">
+    <div class="block-header">최종 승인 요청 금액</div>
+    <div id="summaryBox">
+      <div class="summary-row"><span class="lbl">결제 구분</span><span class="val" id="sum-type">-</span></div>
+      <div class="summary-row"><span class="lbl">산정 근거 금액 (USD)</span><span class="val" id="sum-usd">-</span></div>
+      <div class="summary-row"><span class="lbl">적용 환율 (2% 리스크 반영)</span><span class="val" id="sum-fx">-</span></div>
+      <div class="summary-row summary-final"><span class="lbl">최종 승인 요청 금액 (KRW)</span><span class="val" id="sum-krw">-</span></div>
+    </div>
+  </div>
+
+  <!-- 비고 -->
+  <div class="block" style="border-bottom:none;">
+    <div class="block-header">비고</div>
+    <div class="row">
+      <div class="value wrap" style="width:100%;">
+        <textarea rows="3" style="width:100%;" placeholder="특이사항, 라이선스 수, 계약서 첨부 여부 등을 기재해 주세요."></textarea>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="print-bar">
+  <button class="btn primary" onclick="submitApproval()">결재요청</button>
+</div>
+
+<script>
+function submitApproval(){
+  alert('결재 요청이 접수되었습니다.\n결재선에 등록된 담당자에게 순서대로 전달됩니다.');
+}
+</script>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  const panels = {
+    prepaid: $('panel-prepaid'),
+    prorated: $('panel-prorated'),
+    postpaid: $('panel-postpaid')
+  };
+
+  function showPanel(type){
+    Object.keys(panels).forEach(k=>{
+      panels[k].classList.toggle('active', k===type);
+    });
+  }
+
+  document.querySelectorAll('input[name="payType"]').forEach(r=>{
+    r.addEventListener('change', e=>{
+      showPanel(e.target.value);
+      updateSummary();
+    });
+  });
+  showPanel('prepaid');
+
+  // ---- 일할결제 계산 ----
+  function daysInMonth(y,m){ // m: 1-12
+    return new Date(y, m, 0).getDate();
+  }
+
+  function computeProration(){
+    const startVal = $('pr-startDate').value;
+    const billingDay = parseInt($('pr-billingDay').value, 10);
+    const monthlyFee = parseFloat($('pr-monthlyFee').value);
+    const box = $('pr-calcBox');
+
+    if(!startVal || isNaN(monthlyFee)){
+      box.innerHTML = '<div>결제 시점과 월 구독료를 입력하면 자동으로 계산됩니다.</div>';
+      return null;
+    }
+
+    const start = new Date(startVal + 'T00:00:00');
+    const y = start.getFullYear();
+    const m = start.getMonth()+1; // 1-12
+    const d = start.getDate();
+
+    let nextY = y, nextM = m;
+    if(d >= billingDay){
+      nextM = m + 1;
+      if(nextM > 12){ nextM = 1; nextY = y + 1; }
+    }
+    const nextBillingDate = new Date(nextY, nextM-1, billingDay);
+
+    const msPerDay = 24*60*60*1000;
+    const dayCount = Math.round((nextBillingDate - start) / msPerDay);
+
+    const totalDaysInMonth = daysInMonth(y, m);
+
+    const proratedAmount = monthlyFee * (dayCount / totalDaysInMonth);
+
+    const fmt = (n, digits=2) => n.toLocaleString('en-US', {minimumFractionDigits:digits, maximumFractionDigits:digits});
+    const nextBillingStr = `${nextBillingDate.getFullYear()}-${String(nextBillingDate.getMonth()+1).padStart(2,'0')}-${String(nextBillingDate.getDate()).padStart(2,'0')}`;
+
+    box.innerHTML = `
+      <div>결제 시점: <b>${startVal}</b> &nbsp;→&nbsp; 다음 정기결제일: <b>${nextBillingStr}</b></div>
+      <div>일할 적용 일수: <b>${dayCount}일</b> &nbsp;/&nbsp; 해당월 총일수: <b>${totalDaysInMonth}일</b></div>
+      <hr>
+      <div class="formula">일할금액 = AI Tool 가격 × (일할 적용 일수 ÷ 해당월 총일수)</div>
+      <div class="formula">= ${monthlyFee} × (${dayCount} ÷ ${totalDaysInMonth})</div>
+      <div class="result">= $ ${fmt(proratedAmount)}</div>
+    `;
+    return proratedAmount;
+  }
+
+  ['pr-startDate','pr-billingDay','pr-monthlyFee','pr-seats'].forEach(id=>{
+    $(id).addEventListener('input', ()=>{ computeProration(); updateSummary(); });
+    $(id).addEventListener('change', ()=>{ computeProration(); updateSummary(); });
+  });
+
+  // ---- 환율 계산 ----
+  function computeFx(){
+    const rate = parseFloat($('fxRate').value);
+    const box = $('fxCalcBox');
+    if(isNaN(rate)){
+      box.innerHTML = '<div>현재 환율을 입력하면 자동으로 계산됩니다.</div>';
+      return null;
+    }
+    const applied = rate * 1.02;
+    const fmt = (n, digits=2) => n.toLocaleString('en-US', {minimumFractionDigits:digits, maximumFractionDigits:digits});
+    box.innerHTML = `
+      <div class="formula">적용환율 = 현재환율 × 1.02 (환리스크 2% 반영)</div>
+      <div class="formula">= ${fmt(rate)} × 1.02</div>
+      <div class="result">= ${fmt(applied)} 원/달러</div>
+    `;
+    return applied;
+  }
+  $('fxRate').addEventListener('input', ()=>{ computeFx(); updateSummary(); });
+
+  ['pp-amount','pp-currency','pp-term'].forEach(id=>{
+    $(id).addEventListener('input', updateSummary);
+    $(id).addEventListener('change', updateSummary);
+  });
+  $('pf-amount').addEventListener('input', updateSummary);
+  $('pf-seats').addEventListener('input', updateSummary);
+  document.querySelectorAll('input[name="prepaidType"]').forEach(r=>r.addEventListener('change', ()=>{ toggleNewExtra(); updateSummary(); }));
+  document.querySelectorAll('input[name="newPurchaseStage"]').forEach(r=>r.addEventListener('change', updateSummary));
+  $('pp-seats').addEventListener('input', updateSummary);
+
+  function toggleNewExtra(){
+    const ppType = document.querySelector('input[name="prepaidType"]:checked').value;
+    const show = ppType === 'new';
+    $('pp-new-extra').style.display = show ? 'flex' : 'none';
+    $('pp-new-note').style.display = show ? 'block' : 'none';
+  }
+  toggleNewExtra();
+
+  function currentPayType(){
+    return document.querySelector('input[name="payType"]:checked').value;
+  }
+
+  function updateSummary(){
+    const type = currentPayType();
+    const fmt = (n, digits=2) => isFinite(n) ? n.toLocaleString('en-US', {minimumFractionDigits:digits, maximumFractionDigits:digits}) : '-';
+    let usdAmount = null;
+    let typeLabel = '';
+
+    if(type === 'prepaid'){
+      const ppType = document.querySelector('input[name="prepaidType"]:checked').value;
+      if(ppType === 'new'){
+        const stage = document.querySelector('input[name="newPurchaseStage"]:checked').value;
+        const seats = $('pp-seats').value;
+        const stageLabel = stage === 'initial' ? '선결제(최초 좌석)' : '잔여 결제(추가 좌석)';
+        const seatsLabel = seats ? ` · ${seats}석` : '';
+        typeLabel = `선불결제 · 신규 구매 · ${stageLabel}${seatsLabel}`;
+      } else {
+        typeLabel = '선불결제 · 기존 계정 갱신';
+      }
+      const amount = parseFloat($('pp-amount').value);
+      const currency = $('pp-currency').value;
+      if(currency === 'USD'){
+        usdAmount = isNaN(amount) ? null : amount;
+        $('sum-usd').textContent = usdAmount!=null ? `$ ${fmt(usdAmount)}` : '-';
+      } else {
+        usdAmount = null;
+        $('sum-usd').textContent = isNaN(amount) ? '-' : `${fmt(amount,0)} 원 (KRW 직접 입력)`;
+      }
+    } else if(type === 'prorated'){
+      const seats = $('pr-seats').value;
+      typeLabel = '일할결제' + (seats ? ` · ${seats}석` : '');
+      usdAmount = computeProration();
+      $('sum-usd').textContent = usdAmount!=null ? `$ ${fmt(usdAmount)}` : '-';
+    } else if(type === 'postpaid'){
+      const seats = $('pf-seats').value;
+      typeLabel = '후불결제 (실사용 기준 예상 금액)' + (seats ? ` · ${seats}석` : '');
+      const amount = parseFloat($('pf-amount').value);
+      usdAmount = isNaN(amount) ? null : amount;
+      $('sum-usd').textContent = usdAmount!=null ? `$ ${fmt(usdAmount)}` : '-';
+    }
+
+    $('sum-type').textContent = typeLabel;
+
+    const fx = computeFx();
+    const currency = (type==='prepaid') ? $('pp-currency').value : 'USD';
+
+    $('sum-fx').textContent = fx!=null ? `${fmt(fx)} 원/달러` : '-';
+
+    if(type==='prepaid' && currency==='KRW'){
+      const krwAmount = parseFloat($('pp-amount').value);
+      $('sum-krw').textContent = isNaN(krwAmount) ? '-' : `${fmt(krwAmount,0)} 원`;
+    } else if(usdAmount!=null && fx!=null){
+      const krw = usdAmount * fx;
+      $('sum-krw').textContent = `${fmt(krw,0)} 원`;
+    } else {
+      $('sum-krw').textContent = '-';
+    }
+  }
+
+  function generateUniqueId(){
+    const now = new Date();
+    const datePart = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+    const timePart = `${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}${String(now.getSeconds()).padStart(2,'0')}`;
+    const randomPart = Math.random().toString(36).substring(2,6).toUpperCase();
+    return `AIT-${datePart}-${timePart}-${randomPart}`;
+  }
+  $('uniqueId').value = generateUniqueId();
+
+  const today = new Date();
+  $('draftDate').value = today.toISOString().slice(0,10);
+
+  updateSummary();
+})();
+</script>
+
+</body>
+</html>
